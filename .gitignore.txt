@@ -1,0 +1,31 @@
+# Python 缓存与虚拟环境
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# 本地密钥与配置
+.env
+.env.*
+!.env.example
+
+# 原始视频
+raw/
+*.mp4
+*.mov
+*.avi
+*.mkv
+
+# 模型权重
+*.pt
+*.pth
+*.safetensors
+
+# 运行结果和缓存
+outputs/
+logs/
+.cache/
+
+# 系统文件
+Thumbs.db
+.DS_Store
