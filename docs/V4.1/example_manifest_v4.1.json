@@ -1,0 +1,50 @@
+{
+  "schema_version": "ChemFlow-v4.1",
+  "run_id": "EXAMPLE_RUN",
+  "registry_file": "example_registry_v4.1.xlsx",
+  "recognition_mode": "category_with_auto_instances",
+  "collection": {
+    "timezone": "Asia/Shanghai",
+    "dataset_split": "unassigned"
+  },
+  "capture": {
+    "time_basis": "source_relative_seconds",
+    "sources": [
+      {
+        "source_id": "clear_video",
+        "view": "ego",
+        "file": "raw/clear_video.mp4",
+        "time_scale": null,
+        "is_continuous_clip": false
+      }
+    ],
+    "coverage_gaps": [],
+    "coverage_gaps_status": "unresolved"
+  },
+  "outputs": {
+    "observations": "example_observations_v4.1.xlsx",
+    "events": "example_events_v4.1.xlsx",
+    "lineage": "example_lineage_v4.1.xlsx"
+  },
+  "status": {
+    "is_template": true,
+    "human_review_complete": false
+  },
+  "version_changes": {
+    "from_schema_version": "ChemFlow-v4.1",
+    "removed": [
+      "object_instances",
+      "protocol",
+      "initial_conditions",
+      "initial_conditions_status",
+      "parameter_policy",
+      "absolute_time_and_original_clip_mapping"
+    ],
+    "changed": [
+      "仪器仅记录类别；承载件由程序自动编号",
+      "Registry删除SOP、Entities和Comparison Rules",
+      "三类输出按MaterFlow_v4.1_changes.md适配"
+    ],
+    "note": "版本说明不进入模型提示；时间比例、视频连续性和缺口覆盖均尚未确认。"
+  }
+}

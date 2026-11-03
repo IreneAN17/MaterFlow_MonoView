@@ -22,10 +22,16 @@ raw/
 *.safetensors
 
 # 运行结果和缓存
-outputs/
+/outputs/
 logs/
 .cache/
 
 # 系统文件
 Thumbs.db
 .DS_Store
+.pytest_cache/
+/output/
+/models/
+
+# Office temporary lock files
+~$*

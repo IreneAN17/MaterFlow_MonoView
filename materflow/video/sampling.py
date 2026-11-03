@@ -1,33 +1,121 @@
-def sample_frames(video_path, sampling_config):
-    """用途：生成待分析帧索引及其原视频时间映射。
+from pathlib import Path
+from PIL import Image
+from .reader import read_frames
+from ..schema import FrameRecord, validate_box
 
-    输入：video_path 为视频路径；sampling_config 为现有采样配置。
-    预期输出：可重复使用的分析帧索引和原视频时间映射。
-    TODO：实现采样策略、索引校验及时间映射，避免依赖耗尽的生成器。
-    需确认材料操作的速度、标签可见时段及仪表读数所需的采样密度。
-    """
-    raise NotImplementedError("TODO: 实现具体功能")
+IMAGE_SUFFIXES = {".jpg", ".jpeg", ".png", ".tif", ".tiff", ".bmp", ".webp"}
 
 
-def build_time_windows(video_info, windowing_config):
-    """用途：根据视频信息生成有重叠的分析时间窗口。
+def sample_frames(source_path, sampling_config):
+    """Persist full resolution sampled images, return reusable FrameRecords."""
+    path = Path(source_path)
+    if not path.exists():
+        raise FileNotFoundError(f"Capture source missing: {path}")
+    source_id = sampling_config["source_id"]
+    output = Path(sampling_config["output_dir"]) / "frames" / source_id
+    output.mkdir(parents=True, exist_ok=True)
+    records = []
+    if path.is_dir() or path.suffix.lower() in IMAGE_SUFFIXES:
+        paths = sorted(p for p in path.iterdir() if p.suffix.lower() in IMAGE_SUFFIXES) if path.is_dir() else [path]
+        if not paths:
+            raise ValueError(f"No images in {path}")
+        timestamps = sampling_config.get("timestamps_s")
+        if timestamps is not None and len(timestamps) != len(paths):
+            raise ValueError("timestamps_s must correspond one-to-one to sorted image files")
+        for index, item in enumerate(paths):
+            with Image.open(item) as image:
+                width, height = image.size
+            time_s = timestamps[index] if timestamps is not None else None
+            records.append(FrameRecord(source_id, index, index, time_s, str(item.resolve()), width=width, height=height))
+    else:
+        fps = sampling_config["sample_fps"]
+        next_time = None
+        last_time = None
+        for decoded in read_frames(path):
+            time_s = decoded["source_time_s"]
+            if time_s is not None:
+                if last_time is not None and time_s < last_time:
+                    raise ValueError(f"Non-monotonic PTS in {source_id}")
+                last_time = time_s
+                if next_time is not None and time_s + 1e-9 < next_time:
+                    continue
+                next_time = time_s + 1 / fps if next_time is None else next_time + (int((time_s - next_time) * fps + 1e-9) + 1) / fps
+            index = len(records)
+            image = decoded.pop("image")
+            image_path = output / f"{index:08d}.png"
+            image.save(image_path)
+            records.append(FrameRecord(source_id, index, image_path=str(image_path.resolve()),
+                                       width=image.width, height=image.height, **decoded))
+    if not records:
+        raise ValueError(f"No readable frames in {path}")
+    known = [r.source_time_s for r in records if r.source_time_s is not None]
+    if known != sorted(known):
+        raise ValueError(f"Non-monotonic image timestamps: {source_id}")
+    return records
 
-    输入：video_info 为视频元信息；windowing_config 为窗口配置。
-    预期输出：包含原视频起止时间、重叠区间及帧对应的窗口记录。
-    TODO：实现窗口长度、步长、重叠和末尾不足一窗时的处理。
-    需确认动作起止判据及 SOP 步骤可能交叠的情况；窗口边界不得直接
-    充当事件完成证据，也不得把未知事件边界强制补齐。
-    """
-    raise NotImplementedError("TODO: 实现具体功能")
+
+def build_time_windows(frames, windowing_config):
+    """Indexes refer to the given source list. End is exclusive, including tail windows."""
+    size, stride = windowing_config["window_frames"], windowing_config["window_stride"]
+    windows = []
+    for start in range(0, len(frames), stride):
+        end = min(len(frames), start + size)
+        selection = frames[start:end]
+        if len({f.source_id for f in selection}) != 1:
+            raise ValueError("Build windows separately for each source")
+        windows.append({"source_id": selection[0].source_id, "start": start, "end": end,
+                        "frame_ids": [f.frame_id for f in selection],
+                        "source_frame_indices": [f.source_frame_index for f in selection],
+                        "times_s": [f.source_time_s for f in selection]})
+        if end == len(frames):
+            break
+    return windows
+
+
+def closed_job_bounds(window):
+    """Explicit adapter for SG-Ego's closed start-end text jobs."""
+    return f"{window['start']}-{window['end'] - 1}"
 
 
 def crop_regions(image, regions):
-    """用途：裁剪标签、仪表显示和对象区域，保留原图证据对应。
+    """Input normalized xyxy; output crop + one explicit map to original pixels."""
+    opened = not isinstance(image, Image.Image)
+    original = Image.open(image) if opened else image
+    try:
+        result = []
+        for region in regions:
+            box = validate_box(region["box_xyxy"])
+            width, height = original.size
+            pixels = [int(box[0] * width), int(box[1] * height), min(width, max(int(box[2] * width), int(box[0] * width) + 1)),
+                      min(height, max(int(box[3] * height), int(box[1] * height) + 1))]
+            result.append({"image": original.crop(pixels).convert("RGB"), "crop_xyxy_original_px": pixels,
+                           "original_size": [width, height], "region": region})
+        return result
+    finally:
+        if opened:
+            original.close()
 
-    输入：image 为待裁剪图像；regions 为区域位置及其现有描述。
-    预期输出：区域图像及其到原画面位置、时间和证据的映射。
-    TODO：实现区域裁剪、坐标校验和证据回溯；项目暂无独立裁剪模块，
-    因而在本文件预留接口。需确认标签示例、仪器显示区域与对象区域；
-    第一人称视角移动时需按对象或仪器定位更新区域，不能假定固定像素。
-    """
-    raise NotImplementedError("TODO: 实现具体功能")
+
+def select_caption_frames(frames, config):
+    """Select a timestamp grid without changing detection frames or their IDs."""
+    fps = config.get("caption_fps")
+    if fps is None:
+        return list(frames)
+    import math
+    if not 0 < fps <= config["sample_fps"]:
+        raise ValueError("caption_fps must be positive and <= sample_fps")
+    origins, thresholds, previous, selected = {}, {}, {}, []
+    for frame in frames:
+        sid, time_s = frame.source_id, frame.source_time_s
+        if time_s is None:
+            raise ValueError("caption_fps requires known source timestamps")
+        if sid in previous and time_s < previous[sid]:
+            raise ValueError("Caption sampling requires ordered source timestamps")
+        previous[sid] = time_s
+        origins.setdefault(sid, time_s)
+        thresholds.setdefault(sid, time_s)
+        if time_s + 1e-8 >= thresholds[sid]:
+            selected.append(frame)
+            slot = math.floor((time_s-origins[sid])*fps + 1e-8)
+            thresholds[sid] = origins[sid] + (slot+1)/fps
+    return selected

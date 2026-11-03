@@ -1,0 +1,9 @@
+--extra-index-url https://download.pytorch.org/whl/cu128
+-r requirements.txt
+torch==2.10.0+cu128
+torchvision==0.25.0+cu128
+bitsandbytes==0.50.2
+triton-windows==3.6.0.post26; sys_platform == 'win32'
+flash-linear-attention==0.4.0
+einops==0.8.2
+lm-format-enforcer==0.11.3

@@ -1,0 +1,245 @@
+{
+  "schema_version": "ChemFlow-v4.0",
+  "run_id": "EXAMPLE_RUN",
+  "protocol": {
+    "protocol_id": "SOP_MICROCAPSULE_C16",
+    "registry_file": "example_registry_v4.0.xlsx",
+    "registry_version": "v4.0",
+    "planned_step_ids": [
+      "S01",
+      "S02",
+      "S03",
+      "S04",
+      "S05",
+      "S06",
+      "S07",
+      "S08",
+      "S09",
+      "S10",
+      "S11",
+      "S12"
+    ],
+    "planned_parameter_overrides": [],
+    "plan_confirmed": false,
+    "plan_policy": "SOP is an overridable soft prior; never fill actual execution from plan"
+  },
+  "collection": {
+    "operator_id": null,
+    "run_date": null,
+    "timezone": "Asia/Shanghai",
+    "recipe_variant_id": "C16_BASELINE",
+    "dataset_split": "unassigned"
+  },
+  "capture": {
+    "time_origin_iso": null,
+    "sources": [
+      {
+        "source_id": "clear_video",
+        "view": "ego",
+        "file": "raw/clear_video.mp4",
+        "run_offset_s": null,
+        "time_scale": null,
+        "original_file": null,
+        "original_clip_start_s": null,
+        "original_clip_end_s": null,
+        "clip_start_datetime": null,
+        "clip_end_datetime": null,
+        "time_mapping_status": "unresolved",
+        "is_continuous_clip": null
+      }
+    ],
+    "coverage_gaps": [],
+    "coverage_gaps_status": "unresolved",
+    "time_basis": "source_relative_seconds",
+    "sync_note": "时间原点、原片/剪辑起点和连续性均待确认，未知填null；先使用example_video的片内相对秒，不用首条观察当作视频起点，不跨未知剪辑计算时长。"
+  },
+  "object_instances": [
+    {
+      "object_id": "formamide_bottle_1",
+      "type": "bottle",
+      "object_class": "bottle",
+      "reagent_id": "R_FORMAMIDE",
+      "tag_text": "Formamide",
+      "visual_description": null,
+      "identity_basis": "registered"
+    },
+    {
+      "object_id": "CTAB_bottle_1",
+      "type": "bottle",
+      "object_class": "bottle",
+      "reagent_id": "R_CTAB",
+      "tag_text": "CTAB",
+      "visual_description": null,
+      "identity_basis": "registered"
+    },
+    {
+      "object_id": "hexadecane_bottle_1",
+      "type": "bottle",
+      "object_class": "bottle",
+      "reagent_id": "R_HEXADECANE",
+      "tag_text": "n-Hexadecane",
+      "visual_description": null,
+      "identity_basis": "registered"
+    },
+    {
+      "object_id": "TEOS_bottle_1",
+      "type": "bottle",
+      "object_class": "bottle",
+      "reagent_id": "R_TEOS",
+      "tag_text": "TEOS",
+      "visual_description": null,
+      "identity_basis": "registered"
+    },
+    {
+      "object_id": "HCl_feed_bottle_1",
+      "type": "bottle",
+      "object_class": "bottle",
+      "reagent_id": "R_HCL_FEED",
+      "tag_text": null,
+      "visual_description": null,
+      "identity_basis": "registered"
+    },
+    {
+      "object_id": "main_beaker_1",
+      "type": "container",
+      "object_class": "beaker",
+      "role_id": "C_MAIN",
+      "tag_text": null,
+      "visual_description": null,
+      "identity_basis": "registered"
+    },
+    {
+      "object_id": "feed_container_1",
+      "type": "container",
+      "object_class": "container",
+      "role_id": "C_FEED",
+      "reagent_id": "R_HCL_FEED",
+      "tag_text": null,
+      "visual_description": null,
+      "identity_basis": "registered"
+    },
+    {
+      "object_id": "weigh_cup_1",
+      "type": "container",
+      "object_class": "weighing cup",
+      "role_id": "C_WEIGH",
+      "tag_text": null,
+      "visual_description": null,
+      "identity_basis": "registered"
+    },
+    {
+      "object_id": "weigh_paper_1",
+      "type": "container",
+      "object_class": "weighing paper",
+      "role_id": "C_WEIGH",
+      "tag_text": null,
+      "visual_description": null,
+      "identity_basis": "registered"
+    },
+    {
+      "object_id": "filter_container_1",
+      "type": "container",
+      "object_class": "container",
+      "role_id": "C_FILTER",
+      "tag_text": null,
+      "visual_description": null,
+      "identity_basis": "registered",
+      "notes": "S10过滤/洗涤使用的实际容器。是滤液接收容器还是其他样品承载容器，由视频确认；与滤纸分别追踪，不预设其内部存在目标产物。"
+    },
+    {
+      "object_id": "filter_paper_1",
+      "type": "container",
+      "object_class": "container",
+      "role_id": "C_PRODUCT",
+      "tag_text": null,
+      "visual_description": null,
+      "identity_basis": "registered",
+      "notes": "用于承载过滤保留部分及后续收集/烘干的滤纸，作为独立样品承载件登记。与weigh_paper_1是不同实物，更换滤纸须登记新实例。当前registry未列filter paper类别，暂用已存在的container；不把滤纸当成称量纸类别。"
+    },
+    {
+      "object_id": "product_container_1",
+      "type": "container",
+      "object_class": "container",
+      "role_id": "C_PRODUCT",
+      "tag_text": null,
+      "visual_description": null,
+      "identity_basis": "registered",
+      "notes": "最终样品收集容器，与filter_paper_1共同映射C_PRODUCT。滤纸上的样品实际进入本容器时记录transfer；只搬动仍承载样品的同一张滤纸，不自动推断发生物料转移。"
+    },
+    {
+      "object_id": "balance_1",
+      "type": "instrument",
+      "object_class": "balance",
+      "role_id": "I_BALANCE",
+      "tag_text": null,
+      "visual_description": null,
+      "identity_basis": "registered"
+    },
+    {
+      "object_id": "temperature_probe_1",
+      "type": "instrument",
+      "object_class": "temperature probe",
+      "role_id": "I_TEMPERATURE",
+      "tag_text": null,
+      "visual_description": null,
+      "identity_basis": "registered"
+    },
+    {
+      "object_id": "stirrer_1",
+      "type": "instrument",
+      "object_class": "stirrer",
+      "role_id": "I_STIRRER",
+      "tag_text": null,
+      "visual_description": null,
+      "identity_basis": "registered"
+    }
+  ],
+  "initial_conditions": [],
+  "initial_conditions_status": "unresolved",
+  "parameter_policy": {
+    "actual_source": "video observations; optional instrument logs remain auxiliary evidence",
+    "reading_output": "observations",
+    "duration_basis": "仅在起止证据受支持且覆盖连续性已确认时，由片内秒及已确认映射派生时长；缺失留空，不由计划时长补全。",
+    "reaction_start_rule": null,
+    "reaction_end_rule": null,
+    "reaction_temperature_condition": null,
+    "comparison_interface": {
+      "enabled": false,
+      "registry_sheet": "Comparison Rules",
+      "plan_confirmation_required": true,
+      "parameter_action_map": {
+        "stirring_time_min": "stir",
+        "feeding_time_min": "transfer",
+        "reaction_time_min": "declared_rule"
+      },
+      "reading_parameter_map": {
+        "mass_g": "mass_g"
+      },
+      "write_back_to_prediction": false,
+      "mass_selection_rule": null
+    },
+    "object_map_note": "role_id可对应多个object_id。C_PRODUCT对应filter_paper_1和product_container_1，必须根据实际对象证据选择，不能按角色默认选第一个。Materials.container_id、Events的来源/目标和Observations.object_id使用实际object_id，不填C_PRODUCT或C_FILTER。M/S材料节点在重建时生成。"
+  },
+  "outputs": {
+    "observations": "example_observations_v4.0.xlsx",
+    "events": "example_events_v4.0.xlsx",
+    "lineage": "example_lineage_v4.0.xlsx"
+  },
+  "status": {
+    "recording_complete": null,
+    "human_review_complete": false,
+    "is_template": true
+  },
+  "notes": [
+    "本例以本次上传的example_registry_v4.0.xlsx为准，由manifest_v3.4结构更新；示例不证明实际操作已发生。",
+    "新增filter_container_1映射C_FILTER；filter_paper_1与product_container_1分别登记，共同映射C_PRODUCT。",
+    "tag_text和reagent_id是预登记候选，当前对象身份仍需标签、外观与轨迹证据；visual_description留null，待填真实可见特征。",
+    "Object Classes暂未包含filter paper，因此滤纸使用container这一已有类别；如需单独视觉识别滤纸，先在registry新增filter paper类别再同步该实例的object_class。",
+    "过滤后的材料节点应绑定实际承载/接收对象，并在Lineage.output_part区分已观察的retentate或filtrate；不能按SOP的target_role直接推断保留部分。",
+    "filter_paper_1作为样品承载件可用于Materials.container_id；它与称量纸、过滤容器及最终收集容器均为不同实物。",
+    "Relations是帧级关系词表，供识别/归一化使用；其中on、in等关系可帮助定位滤纸和容器，但关系词本身不能证明已过滤、已转移或来源完整。",
+    "本次registry.S12已改为烘干，仍遗留age说明及CMP_AGING_TIME老化比较规则，需同步清理。本例关闭计划比较，并移除aging_time_min映射，不把原24h参考当作烘干时长。烘箱停留可用hold记录，但不自动证明干燥完成。",
+    "initial_conditions及coverage_gaps的空列表均配有unresolved状态，不能解释为容器为空或没有盲区。",
+    "所有时间信息待确认；不写入假定0秒、假定连续或旧视频名称。"
+  ]
+}

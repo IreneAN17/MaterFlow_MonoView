@@ -1,0 +1,8 @@
+{
+  "Observations": ["observation_id", "source_id", "start_s", "end_s", "signal_type", "observed_value", "unit", "object_id", "instrument_id", "value_basis", "evidence_refs", "notes"],
+  "Events": ["event_id", "action", "source_id", "start_s", "end_s", "source_container_id", "target_container_id", "sop_step_candidate", "interval_status", "evidence_refs", "notes"],
+  "Materials": ["material_id", "material_type", "container_id", "reagent_ids", "created_by_event_id", "provenance_status", "notes"],
+  "Lineage": ["edge_id", "source_material_id", "relation", "target_material_id", "event_id", "output_part", "notes"],
+  "Field Evidence": ["record_id", "field", "field_status", "evidence_refs", "reviewer", "notes"],
+  "说明": ["key", "value", "meaning"]
+}

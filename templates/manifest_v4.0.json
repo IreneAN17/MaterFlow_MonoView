@@ -1,0 +1,199 @@
+{
+  "schema_version": "MaterFlow-v4.0",
+  "document_kind": "template",
+  "run_id": null,
+  "protocol_id": "SOP_MICROCAPSULE_C16",
+  "registry_path": "configs/materials/registry_v4.0.xlsx",
+  "timezone": "Asia/Shanghai",
+  "operator_id": null,
+  "sources": [
+    {
+      "source_id": "ego_01",
+      "view": "ego",
+      "file": null,
+      "is_continuous": null,
+      "run_offset_s": null,
+      "time_scale": 1,
+      "start_datetime": null,
+      "notes": "填写原始视频路径；跳剪按连续片段分source。秒数可独立使用，墙钟未知不猜。"
+    }
+  ],
+  "object_instances": [
+    {
+      "object_id": "camera_wearer",
+      "object_type": "human",
+      "role_id": null,
+      "reagent_id": null,
+      "label_text": null,
+      "appearance_hint": "第一人称操作者"
+    },
+    {
+      "object_id": "formamide_bottle_1",
+      "object_type": "bottle",
+      "role_id": null,
+      "reagent_id": "R_FORMAMIDE",
+      "label_text": "Formamide",
+      "appearance_hint": null
+    },
+    {
+      "object_id": "hexadecane_bottle_1",
+      "object_type": "bottle",
+      "role_id": null,
+      "reagent_id": "R_HEXADECANE",
+      "label_text": "n-Hexadecane",
+      "appearance_hint": null
+    },
+    {
+      "object_id": "CTAB_bottle_1",
+      "object_type": "bottle",
+      "role_id": null,
+      "reagent_id": "R_CTAB",
+      "label_text": "CTAB",
+      "appearance_hint": null
+    },
+    {
+      "object_id": "TEOS_bottle_1",
+      "object_type": "bottle",
+      "role_id": null,
+      "reagent_id": "R_TEOS",
+      "label_text": "TEOS",
+      "appearance_hint": null
+    },
+    {
+      "object_id": "HCl_feed_bottle_1",
+      "object_type": "bottle",
+      "role_id": null,
+      "reagent_id": "R_HCL_FEED",
+      "label_text": null,
+      "appearance_hint": null
+    },
+    {
+      "object_id": "main_beaker_1",
+      "object_type": "container",
+      "role_id": "C_MAIN",
+      "reagent_id": null,
+      "label_text": null,
+      "appearance_hint": null
+    },
+    {
+      "object_id": "weigh_cup_1",
+      "object_type": "container",
+      "role_id": "C_WEIGH",
+      "reagent_id": null,
+      "label_text": null,
+      "appearance_hint": null
+    },
+    {
+      "object_id": "feed_container_1",
+      "object_type": "container",
+      "role_id": "C_FEED",
+      "reagent_id": null,
+      "label_text": null,
+      "appearance_hint": null
+    },
+    {
+      "object_id": "product_container_1",
+      "object_type": "container",
+      "role_id": "C_PRODUCT",
+      "reagent_id": null,
+      "label_text": null,
+      "appearance_hint": null
+    },
+    {
+      "object_id": "balance_1",
+      "object_type": "instrument",
+      "role_id": "I_BALANCE",
+      "reagent_id": null,
+      "label_text": null,
+      "appearance_hint": null
+    },
+    {
+      "object_id": "temperature_probe_1",
+      "object_type": "instrument",
+      "role_id": "I_TEMPERATURE",
+      "reagent_id": null,
+      "label_text": null,
+      "appearance_hint": null
+    },
+    {
+      "object_id": "stirrer_1",
+      "object_type": "instrument",
+      "role_id": "I_STIRRER",
+      "reagent_id": null,
+      "label_text": null,
+      "appearance_hint": null
+    }
+  ],
+  "initial_contents": [
+    {
+      "container_id": "main_beaker_1",
+      "state": "unknown",
+      "reagent_ids": [],
+      "evidence_refs": [],
+      "notes": "拍摄后依据证据确认empty/known/unknown；登记不等于视觉确认。"
+    },
+    {
+      "container_id": "weigh_cup_1",
+      "state": "unknown",
+      "reagent_ids": [],
+      "evidence_refs": [],
+      "notes": "拍摄后依据证据确认empty/known/unknown；登记不等于视觉确认。"
+    },
+    {
+      "container_id": "feed_container_1",
+      "state": "unknown",
+      "reagent_ids": [],
+      "evidence_refs": [],
+      "notes": "拍摄后依据证据确认empty/known/unknown；登记不等于视觉确认。"
+    },
+    {
+      "container_id": "product_container_1",
+      "state": "unknown",
+      "reagent_ids": [],
+      "evidence_refs": [],
+      "notes": "拍摄后依据证据确认empty/known/unknown；登记不等于视觉确认。"
+    }
+  ],
+  "instrument_profiles": [
+    {
+      "instrument_id": "balance_1",
+      "signal_types": [
+        "mass_g"
+      ],
+      "reading_kind": "display_unknown",
+      "roi_mode": "relative_to_detected_instrument",
+      "roi_xyxy": null,
+      "notes": "填仪表模式与单位含义；第一人称ROI需跟随定位，不固定全帧坐标。"
+    },
+    {
+      "instrument_id": "temperature_probe_1",
+      "signal_types": [
+        "temperature_c"
+      ],
+      "reading_kind": "display_unknown",
+      "roi_mode": "relative_to_detected_instrument",
+      "roi_xyxy": null,
+      "notes": "填仪表模式与单位含义；第一人称ROI需跟随定位，不固定全帧坐标。"
+    },
+    {
+      "instrument_id": "stirrer_1",
+      "signal_types": [
+        "stirring_speed_rpm"
+      ],
+      "reading_kind": "display_unknown",
+      "roi_mode": "relative_to_detected_instrument",
+      "roi_xyxy": null,
+      "notes": "填仪表模式与单位含义；第一人称ROI需跟随定位，不固定全帧坐标。"
+    }
+  ],
+  "run_overrides": {
+    "sop": [],
+    "plan_confirmed": false
+  },
+  "outputs": {
+    "observations": "observations_v4.0.xlsx",
+    "events": "events_v4.0.xlsx",
+    "lineage": "lineage_v4.0.xlsx"
+  },
+  "notes": "预填实物为拍摄准备候选：删除不使用项，补足实际实例及外观；不得把登记当作已执行或已绑定身份。"
+}

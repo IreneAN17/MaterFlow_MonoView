@@ -1,9 +1,14 @@
-def main():
-    """用途：预留命令行启动入口，后续解析 --config 并调用 process_run。
+import argparse
+from materflow.pipeline import process_run, STAGES
 
-    输入：当前无显式参数；后续由命令行提供本次实验的配置路径。
-    预期输出：启动单次实验处理，并按约定反馈运行状态。
-    TODO：实现参数解析、配置路径传递和退出状态约定；需确认实验 run
-    配置与视频路径。本次不添加自动执行语句，主流程接口可用后再接入。
-    """
-    raise NotImplementedError("TODO: 实现具体功能")
+
+def main():
+    parser = argparse.ArgumentParser(description="MaterFlow: visual observations → events → material lineage")
+    parser.add_argument("--config", required=True, help="run YAML; paths within YAML are repository-relative")
+    parser.add_argument("--stage", choices=(*STAGES, "all"), default="all")
+    args = parser.parse_args()
+    process_run(args.config, args.stage)
+
+
+if __name__ == "__main__":
+    main()

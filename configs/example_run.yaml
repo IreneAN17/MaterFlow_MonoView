@@ -1,0 +1,9 @@
+run_id: EXAMPLE_RUN
+registry_path: docs/V4.0/example_registry_v4.0.xlsx
+manifest_path: configs/example_manifest_filter.json
+output_dir: outputs/EXAMPLE_RUN
+model_name: Qwen/Qwen3.5-9B
+sample_fps: 5
+window_frames: 10
+window_stride: 8
+device: cuda

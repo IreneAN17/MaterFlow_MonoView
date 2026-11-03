@@ -8,7 +8,7 @@ class SGLangBackend(VisionBackend):
     仪表和操作片段的请求约定。本次不建立网络连接。
     """
 
-    def infer_images(self, images, prompt):
+    def infer_images(self, images, prompt, *, response_schema=None):
         """用途：预留通过模型服务进行独立图片推理。
 
         输入：images 为独立图片集合；prompt 为任务提示词。
