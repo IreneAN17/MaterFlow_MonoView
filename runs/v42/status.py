@@ -13,6 +13,11 @@ def main():
     if not path.exists():
         print("Not started:",c["output_dir"]);return
     s=read_json(path)
+    live=c["output_dir"]/"status.json"
+    if live.exists():
+        latest=read_json(live)
+        if latest.get("stage") in s["stages"] and latest.get("pid")==s["stages"][latest["stage"]].get("pid"):
+            s["stages"][latest["stage"]].update(latest)
     for name,item in s["stages"].items():
         status=item["status"]
         if status=="running":

@@ -11,6 +11,12 @@ from materflow.v42.runtime import STAGES,utc
 from materflow.schema import read_json,write_json
 
 def main():
+    from materflow.v42.power import keep_awake
+    with keep_awake() as state:
+        print("Runner execution-state request:",state,flush=True)
+        return run_main()
+
+def run_main():
     p=argparse.ArgumentParser()
     p.add_argument("--config",required=True)
     p.add_argument("--from-stage",choices=STAGES,default="prepare")

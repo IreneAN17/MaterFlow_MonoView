@@ -1,3 +1,5 @@
+长视频基础设施优化（2026-11-07）：见 [优化说明](docs/long_video_optimization.md)、[缓存迁移](docs/long_video_cache_migration.md) 与 [实测及限制](docs/long_video_benchmark.md)。本轮维持模型/5fps事实规则，轨迹、ROI与语义选择策略的质量对照仍待完成。
+
 V4.2：日期时间业务表、严格目标筛选、按需语义复核与流式跟踪见 [运行说明](docs/v42_migration.md)。缺少目录/权重时明确待配置，不虚构20类或品牌识别成果。
 
 V4.1 的独立输出、运行与续跑说明见 [docs/v41_migration.md](docs/v41_migration.md)。本轮修订仅允许四类动作，新版 annotated video 不含音轨。

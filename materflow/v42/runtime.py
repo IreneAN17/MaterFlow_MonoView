@@ -3,7 +3,8 @@ from pathlib import Path
 import importlib.metadata
 import time
 from ..schema import file_hash, stable_id, read_json
-from ..v41.runtime import Progress, Ids, process_info, gpu_sample, utc, verified
+from ..v41.runtime import Ids, process_info, gpu_sample, utc, verified
+from .progress import Progress
 
 STAGES = ("prepare", "scan", "ocr", "identify", "semantic", "aggregate", "derive", "export")
 # Explicit DAG: catalog/presentation changes do not invalidate visual evidence.
@@ -14,14 +15,14 @@ UPSTREAM = {
     "derive": ("aggregate",), "export": ("prepare", "scan", "aggregate", "derive"),
 }
 FILES = {
-    "prepare": ("io.py", "clock.py"),
+    "prepare": ("io.py", "clock.py", "ocr_service.py"),
     "scan": ("scan.py", "tracking.py", "detectors.py", "segmentation.py", "../perception/grounding.py"),
-    "ocr": ("ocr.py", "../../runs/v42/ocr_worker.py"),
+    "ocr": ("ocr.py", "ocr_service.py", "tasks.py", "../../runs/v42/ocr_worker.py"),
     "identify": ("catalog.py", "gallery.py"),
     "semantic": ("semantic.py", "../perception/relations.py", "../backends/transformers_backend.py",
-                 "../backends/json_constraints.py"),
-    "aggregate": ("aggregate.py", "intervals.py", "clock.py", "catalog.py", "schema_v4_2.json", "../v41/runtime.py"),
-    "derive": ("derive.py", "timeline.py", "../v41/domain.py", "../materials/events.py"),
+                 "../backends/json_constraints.py", "tasks.py"),
+    "aggregate": ("aggregate.py", "intervals.py", "clock.py", "catalog.py", "schema_v4_2.json", "../v41/runtime.py", "ids.py"),
+    "derive": ("derive.py", "timeline.py", "../v41/domain.py", "../materials/events.py", "ids.py"),
     "export": ("export.py", "video.py", "schema_v4_2.json", "clock.py", "timeline.py", "time_refine.py"),
 }
 KEYS = {
@@ -50,7 +51,7 @@ def dependencies(stage, context, summary):
     c = context["config"]
     package = Path(__file__).parent
     code = {}
-    for name in (*FILES[stage], "context.py", "runtime.py"):
+    for name in (*FILES[stage], "context.py", "runtime.py", "progress.py", "power.py"):
         path = package / name
         if path.is_file():
             code[name] = file_hash(path)

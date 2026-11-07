@@ -31,7 +31,7 @@ def scan(context,progress):
             if hasattr(tracker,"state"):
                 descriptor["end_state"]=tracker.state()
             write_json(Path(descriptor["path"]).with_suffix(".meta.json"),descriptor)
-            parts.append(descriptor)
+            parts.append({k:v for k,v in descriptor.items() if k not in ("rejected","end_state")})
         writer=None
     try:
         with jsonl_writer(raw_rejections) as reject:
@@ -50,7 +50,7 @@ def scan(context,progress):
                             reusable=candidate
                     reused_part=reusable is not None
                     if reused_part:
-                        descriptor=reusable;parts.append(reusable)
+                        descriptor=reusable;parts.append({k:v for k,v in reusable.items() if k not in ("rejected","end_state")})
                         restore_state=reusable["end_state"]
                         for row in reusable.get("rejected",[]):
                             reject(row)
@@ -68,7 +68,7 @@ def scan(context,progress):
                         writer=jsonl_writer(path);append=writer.__enter__()
                     # Detector task caches make replay safe after interruption. Partition rows remain atomic.
                     write_json(folder/"scan_checkpoint.json",{"status":"running","partition":thiskey,
-                               "completed_partitions":parts,"last_committed_source_time_s":t,
+                               "completed_partition_count":len(parts),"last_committed_source_time_s":t,
                                "resume_policy":"Replay optical state from source; reuse verified neural detection tasks"})
                 if reused_part:
                     previous=gray_image(image,c["optical_flow_width"])

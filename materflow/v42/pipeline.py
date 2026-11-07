@@ -25,6 +25,12 @@ def ancestors(stage):
     return result
 
 def process_run(config_path, stage="all", force=False):
+    from .power import keep_awake
+    with keep_awake() as power:
+        print("Execution-state request:",power,flush=True)
+        return _process_run(config_path,stage,force)
+
+def _process_run(config_path, stage="all", force=False):
     if stage not in (*STAGES, "all"):
         raise ValueError("V4.2 stages: " + ", ".join(STAGES))
     context = load_context(load_config(config_path))
@@ -74,11 +80,16 @@ def process_run(config_path, stage="all", force=False):
         summary["stages"][name]=item
         write_json(path,summary)
         print("Starting "+name+": "+str(out),flush=True)
-        start=time.perf_counter()
+        start=time.perf_counter();cpu_start=time.process_time()
         with Progress(path,summary,name) as progress:
             try:
                 module,fn=FUNCTIONS[name]
-                artifacts=getattr(importlib.import_module("materflow.v42."+module),fn)(context,progress)
+                try:
+                    artifacts=getattr(importlib.import_module("materflow.v42."+module),fn)(context,progress)
+                finally:
+                    if context.get("_ocr_worker"):
+                        context["_ocr_worker"].close()
+                        context.pop("_ocr_worker",None)
                 if ledger_path.is_file():
                     summary["id_allocations"]=read_json(ledger_path)["maps"]
                 if dependencies(name,context,summary)!=key:
@@ -87,14 +98,14 @@ def process_run(config_path, stage="all", force=False):
                     raise RuntimeError("Pass dependencies changed during execution; resume with the stable code")
                 digests={str(Path(p).relative_to(out)):file_hash(p) for p in artifacts}
                 progress.update(status="complete",progress="all artifacts verified",
-                                elapsed_s=time.perf_counter()-start,finished_utc=utc(),
+                                elapsed_s=time.perf_counter()-start,process_cpu_s=time.process_time()-cpu_start,finished_utc=utc(),
                                 gpu_end=gpu_sample(),exit_code=0,artifacts=digests)
                 if "torch" in sys.modules and sys.modules["torch"].cuda.is_available():
                     progress.update(peak_allocated_bytes=sys.modules["torch"].cuda.max_memory_allocated(),
                                     peak_reserved_bytes=sys.modules["torch"].cuda.max_memory_reserved())
             except BaseException as e:
                 progress.update(status="interrupted" if isinstance(e,KeyboardInterrupt) else "partial" if getattr(e,"pending_work",False) else "failed",
-                                elapsed_s=time.perf_counter()-start,finished_utc=utc(),
+                                elapsed_s=time.perf_counter()-start,process_cpu_s=time.process_time()-cpu_start,finished_utc=utc(),
                                 error=type(e).__name__+": "+str(e),exit_code=130 if isinstance(e,KeyboardInterrupt) else 1)
                 raise
         print("Completed "+name,flush=True)

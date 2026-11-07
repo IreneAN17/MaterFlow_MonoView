@@ -69,12 +69,14 @@ def run_worker(requests, path, context, mode):
     write_json(request_file, requests)
     if not c["ocr_python"].is_file():
         raise FileNotFoundError("Isolated OCR Python missing; use runs/v41/setup_ocr.ps1")
-    process = subprocess.run([str(c["ocr_python"]), str(script), "--input", str(request_file),
-                              "--output", str(path), "--mode", mode],
-                             capture_output=True, encoding="utf-8", errors="replace")
-    if process.returncode:
-        raise RuntimeError("OCR worker failed: " + process.stderr[-2000:])
-    return read_json(path)
+    from .ocr_service import client
+    worker=client(context);started=time.perf_counter()
+    results=list(worker.iter_results(requests,mode))
+    report={**worker.manifest,'results':results,'elapsed_s':time.perf_counter()-started,
+            'worker_starts':worker.starts,'initialization_count':worker.starts,'startup_s':worker.startup_s}
+    write_json(path,report)
+    return report
+
 
 def prepare(context, progress):
     c = context["config"]
@@ -112,6 +114,7 @@ def prepare(context, progress):
         raise ValueError("Empty selected range")
     raw = run_worker(requests, folder/"clock_raw.json", context, "clock")
     anchors = normalize_anchors(raw["results"], c["timezone"], c["clock_score_threshold"])
+    segments=[]
     for sid in context["sources"]:
         valid = [r for r in anchors if r["source_id"] == sid and r["datetime"]]
         jumps = []
@@ -119,10 +122,13 @@ def prepare(context, progress):
             delta = (datetime.fromisoformat(b["datetime"])-datetime.fromisoformat(a["datetime"])).total_seconds()
             if abs(delta-(b["source_time_s"]-a["source_time_s"])) > 1.1:
                 jumps.append(b["frame_id"])
+                segments.append({"source_id":sid,"boundary_frame_id":b["frame_id"],"previous_anchor":a,"next_anchor":b})
         for key in shot_map:
             s, fid = key.rsplit(":", 1)
             if s == sid:
-                shot_map[key] += "".join(":clock"+str(j) for j in jumps if int(fid) >= j)
+                from bisect import bisect_right
+                shot_map[key] += ":epoch"+str(bisect_right(jumps,int(fid)))
+    write_json(folder/"clock_segments.json", {"format_version":2,"boundaries":segments})
     write_json(folder/"clock_anchors.json", anchors)
     write_json(folder/"shots.json", shot_map)
     write_json(folder/"motion_scores.json", motions)
@@ -130,5 +136,5 @@ def prepare(context, progress):
                "parsed_anchors": sum(bool(a["datetime"]) for a in anchors), "elapsed_s": time.perf_counter()-start,
                "full_source_frames_saved": 0, "human_reference_used": False})
     progress.update(f"prepare: {count} samples, {len(anchors)} source-clock anchors")
-    return [folder/p for p in ("frame_index.jsonl", "clock_raw.json", "clock_raw_requests.json",
+    return [folder/p for p in ("clock_segments.json", "frame_index.jsonl", "clock_raw.json", "clock_raw_requests.json",
             "clock_anchors.json", "shots.json", "motion_scores.json", "prepare_metrics.json")] + list(cropdir.glob("*.png"))

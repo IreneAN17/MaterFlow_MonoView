@@ -11,6 +11,7 @@ from ..schema import read_json,write_json,stable_id,file_hash
 from .io import internal,FrameStore,crop_box,records,jsonl_writer
 from .scan import scan_rows
 from .clock import run_worker
+from .ocr_service import client
 
 READING = re.compile(r"^([+-]?\d+(?:\.\d+)?)\s*(mg|kg|g|mL|ml|L|rpm|°C|℃|C)$",re.I)
 
@@ -50,13 +51,21 @@ def select_regions(context):
     return selected
 
 def run_ocr(context,progress):
+    from .tasks import TaskLedger
+    ledger=TaskLedger(internal(context)/'ocr_tasks.sqlite')
+    context['_ocr_task_ledger']=ledger
+    try:return _run_ocr(context,progress)
+    finally:ledger.close()
+
+def _run_ocr(context,progress):
     c=context["config"];folder=internal(context);start=time.perf_counter()
     choices=select_regions(context);store=FrameStore(context)
     frames={(r["frame"]["source_id"],r["frame"]["frame_id"]):r["frame"] for r in choices}
     materialized={(r["source_id"],r["frame_id"]):r for r in store.fetch(frames.values())}
     cache=folder/"cache/ocr";cache.mkdir(parents=True,exist_ok=True)
     cropdir=folder/"evidence/ocr";cropdir.mkdir(parents=True,exist_ok=True)
-    worker_hash=file_hash(c["repo_root"]/"runs/v42/ocr_worker.py")
+    service=client(context)
+    worker_hash=stable_id("OCR_ENGINE",service.manifest)
     ready=[];pending=[];hits=0;artifacts=[];duplicate_crops=0;seen={};last_display={}
     for choice in choices:
         frame=materialized[choice["frame"]["source_id"],choice["frame"]["frame_id"]]
@@ -69,9 +78,16 @@ def run_ocr(context,progress):
                 continue
             seen[choice["track_id"]]=thumb
             digest=hashlib.sha256(np.asarray(crop).tobytes()).hexdigest()
-            key=stable_id("OCR",digest,worker_hash,"regions","RapidOCR-1.4.4")
+            key=stable_id("OCR2",digest,crop.size,"RGB",worker_hash,"regions")
             crop_path=cropdir/(key+".png")
-            crop.save(crop_path)  # Deterministic evidence reconstruction; no existence-only image cache.
+            evidence_meta=crop_path.with_suffix('.meta.json')
+            valid_evidence=False
+            if crop_path.exists() and evidence_meta.exists():
+                try:valid_evidence=read_json(evidence_meta).get('sha256')==file_hash(crop_path)
+                except (OSError,ValueError):pass
+            if not valid_evidence:
+                crop.save(crop_path)
+                write_json(evidence_meta,{'sha256':file_hash(crop_path),'pixel_sha256':digest,'format_version':2})
         entry={**choice,"frame":frame,"request_id":stable_id("OCRQ",frame,choice["track_id"],key),
                "cache_key":key,"crop_path":str(crop_path),"crop_xyxy_px":pixels,
                "original_size":[frame["width"],frame["height"]]}
@@ -98,23 +114,29 @@ def run_ocr(context,progress):
         else:
             pending.append(entry)
         artifacts.append(crop_path)
+    ledger=context["_ocr_task_ledger"]
     worker_models=None
     if ready:
         worker_models=ready[0].get("worker_model")
-    for start_index in range(0,len(pending),c["ocr_batch_size"]):
-        batch=pending[start_index:start_index+c["ocr_batch_size"]]
-        batch_path=folder/"ocr_batches"/(str(start_index).zfill(6)+".json")
-        batch_path.parent.mkdir(parents=True,exist_ok=True)
-        raw=run_worker(batch,batch_path,context,"regions")
-        worker_models={k:raw[k] for k in ("engine","versions","model_sha256","scores_are_calibrated_probabilities")}
-        for item in raw["results"]:
-            result={k:item[k] for k in ("raw_text","model_score","blocks","elapsed")}
-            result["worker_model"]=worker_models
-            write_json(cache/(item["cache_key"]+".json"),{"key":item["cache_key"],
-                       "result":result,"digest":stable_id("",result)})
-            ready.append({**item,**result})
-        progress.update(f"ocr: {min(start_index+c['ocr_batch_size'],len(pending))}/{len(pending)} selected regions")
-        artifacts += [batch_path,batch_path.with_name(batch_path.stem+"_requests.json")]
+    by_key={}
+    for entry in pending:by_key.setdefault(entry['cache_key'],[]).append(entry)
+    unique=[group[0] for group in by_key.values()]
+    for entry in ready:ledger.set(entry['cache_key'],'succeeded',output_ref=str(cache/(entry['cache_key']+'.json')))
+    for entry in unique:ledger.set(entry['cache_key'],'pending',input_ref=entry['crop_path'])
+    worker_models=service.manifest
+    committed=0
+    def queued():
+        for entry in unique:
+            ledger.set(entry['cache_key'],'running',input_ref=entry['crop_path'])
+            yield entry
+    for item in service.iter_results(queued(),'regions'):
+        result={k:item[k] for k in ('raw_text','model_score','blocks','elapsed')}
+        result['worker_model']=worker_models
+        write_json(cache/(item['cache_key']+'.json'),{'key':item['cache_key'],'result':result,'digest':stable_id('',result)})
+        ledger.set(item['cache_key'],'succeeded',output_ref=str(cache/(item['cache_key']+'.json')))
+        for entry in by_key[item['cache_key']]:ready.append({**entry,**result})
+        committed+=1
+        progress.update(f'ocr: {committed}/{len(unique)} unique regions; one persistent worker')
     ready.sort(key=lambda r:(r["frame"]["source_id"],r["frame"]["source_time_s"],r["request_id"]))
     for entry in ready:
         readings=[]
@@ -132,6 +154,8 @@ def run_ocr(context,progress):
         "selected_regions":len(choices),"unique_crop_queries":len(ready),"worker_queries":len(pending),
         "cache_hits":hits,"duplicate_label_crops_avoided":duplicate_crops,
         "elapsed_s":time.perf_counter()-start,"worker":worker_models,
+        "worker_starts":service.starts,"initialization_count":service.starts,"actual_engine_calls":service.calls,
+        "inflight_duplicates_coalesced":len(pending)-len(unique),"startup_s":service.startup_s,
         "display_change_triggers":sum(bool(r.get("display_change_trigger")) for r in ready),
         "catalog_used_as_ocr_input":False,"numeric_readouts":sum(len(x["parsed_readouts"]) for x in ready)})
     return [folder/"ocr_results.jsonl",folder/"ocr_metrics.json"]+artifacts

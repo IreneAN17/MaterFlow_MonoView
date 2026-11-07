@@ -158,6 +158,9 @@ def run_semantic(context,progress):
     frame_rows={(f["source_id"],f["frame_id"]):f for job in jobs for f in job["frames"]}
     materialized={(f["source_id"],f["frame_id"]):f for f in FrameStore(context).fetch(frame_rows.values())}
     cache=folder/"cache/semantic";cache.mkdir(parents=True,exist_ok=True)
+    from .tasks import TaskLedger
+    ledger=TaskLedger(folder/"tasks.sqlite")
+    failures=[]
     results=[];pending=[];artifacts=[]
     for job in jobs:
         job["frames"]=[materialized[f["source_id"],f["frame_id"]] for f in job["frames"]]
@@ -173,9 +176,11 @@ def run_semantic(context,progress):
                     parsed=validate_response(item["raw"],job,context)
                     results.append({**job,**parsed,"raw":item["raw"],"cached":True,
                                     "model":item.get("model"),"attempts":item.get("attempts",[])})
+                    ledger.set(key,"succeeded",output_ref=str(path))
                     continue
             except (ValueError,KeyError,OSError):
                 pass
+        ledger.set(key,"pending",input_ref=str(job["frame"]["image_path"]))
         pending.append(job)
     write_json(folder/"semantic_plan.json",jobs)
     metrics={"planned_scene_tasks":sum(j["kind"]=="scene" for j in jobs),
@@ -208,6 +213,7 @@ def run_semantic(context,progress):
         path=cache/(job["request_id"]+".json");write_json(path,item)
         results.append({**job,**parsed,"raw":raw,"cached":False,"model":backend.version,"attempts":attempts})
         artifacts.append(path)
+        ledger.set(job["request_id"],"succeeded",output_ref=str(path))
     # Independent scene requests can batch; ordered reviews are one multimodal request each.
     index=0
     while index<len(allowed):
@@ -231,8 +237,9 @@ def run_semantic(context,progress):
             "elapsed_s":time.perf_counter()-t,"backend_metrics":getattr(backend,"last_inference",None)})
         for j,raw in zip(batch,raws,strict=True):
             attempts=[]
+            ledger.set(j["request_id"],"running",input_ref=j["frame"]["image_path"])
             for attempt in range(c["semantic_max_attempts"]):
-                rawpath=folder/"evidence/semantic"/(j["request_id"]+"_"+str(attempt)+".json")
+                rawpath=folder/"evidence/semantic"/(j["request_id"]+"_"+str(attempt)+"_"+str(time.time_ns())+".json")
                 rawpath.parent.mkdir(parents=True,exist_ok=True)
                 try:
                     validate_response(raw,j,context)
@@ -244,7 +251,9 @@ def run_semantic(context,progress):
                     write_json(rawpath,{"raw":raw,"valid":False,"error":str(e),"request_id":j["request_id"]})
                     attempts.append(str(rawpath));artifacts.append(rawpath)
                     if attempt+1==c["semantic_max_attempts"]:
-                        raise ValueError("Semantic validation failed at "+str(rawpath)+": "+str(e)) from e
+                        failures.append({"request_id":j["request_id"],"error":str(e),"raw_ref":str(rawpath)})
+                        ledger.set(j["request_id"],"failed_permanent",attempt=attempt+1,error=str(e),output_ref=str(rawpath))
+                        break
                     retry=j["prompt"]+"\n上次输出引用/结构不合法："+str(e)+"。重新检查可见事实，不补充或重复对象。"
                     if j["kind"]=="scene":
                         raw=backend.infer_images([j["frame"]["image_path"]],retry,response_schema=scene_response_schema())[0]
@@ -259,11 +268,17 @@ def run_semantic(context,progress):
     results.sort(key=lambda r:(r["frame"]["source_id"],r["frame"]["source_time_s"],r["kind"]))
     write_json(folder/"semantic_results.json",results)
     metrics["pending_tasks"]=len(deferred)
+    metrics["validated_tasks"]=len(results)
+    metrics["failed_tasks"]=len(failures)
     metrics["elapsed_s"]=time.perf_counter()-start
     write_json(folder/"semantic_metrics.json",metrics)
     write_json(folder/"semantic_deferred.json",deferred)
+    write_json(folder/"semantic_failures.json",failures)
+    ledger.close()
+    if failures:
+        raise PendingWork(str(len(failures))+" semantic tasks failed; independent successes committed; retry same stage")
     if deferred:
         raise PendingWork("Semantic budget left "+str(len(deferred))+" tasks; results preserved; raise budget and resume")
-    artifacts += [folder/p for p in ("semantic_plan.json","semantic_results.json","semantic_metrics.json","semantic_deferred.json")]
+    artifacts += [folder/p for p in ("semantic_failures.json","semantic_plan.json","semantic_results.json","semantic_metrics.json","semantic_deferred.json")]
     artifacts += [Path(f["image_path"]) for j in jobs for f in j["frames"]]
     return list(dict.fromkeys(artifacts))

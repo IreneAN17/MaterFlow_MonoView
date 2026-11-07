@@ -56,8 +56,9 @@ class FrameStore:
     def __init__(self, context):
         self.context = context
         self.folder = internal(context) / "evidence/frames"
-        self.source_hashes=context.setdefault("_source_hashes",{
-            sid:file_hash(path) for sid,path in context["source_paths"].items()})
+        if "_source_hashes" not in context:
+            context["_source_hashes"]={sid:file_hash(path) for sid,path in context["source_paths"].items()}
+        self.source_hashes=context["_source_hashes"]
 
     def path(self, row):
         return self.folder / row["source_id"] / (str(row["frame_id"]).zfill(8) + ".png")

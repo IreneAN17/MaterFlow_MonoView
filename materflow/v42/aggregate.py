@@ -6,7 +6,7 @@ import json
 import sqlite3
 import os
 from ..schema import read_json,write_json,stable_id
-from ..v41.runtime import Ids
+from .ids import Ids
 from ..v41.context import core_evidence
 from ..perception.grounding import box_iou
 from .io import internal,records,jsonl_writer
@@ -315,7 +315,7 @@ def aggregate(context,progress):
                                  if (item.get("object_id") or "").startswith(prefix+"_")])
     connection.commit();connection.close()
     finaldb=folder/"aggregation.sqlite";dbpath.replace(finaldb)
-    ids.save()
+    ids.flush()
     progress.update(f"aggregate: {raw_count} raw -> {len(admitted)} admitted points -> {len(business)} timestamp-ready business intervals")
     return [folder/p for p in ("raw_observations.jsonl","normalized_observations.jsonl","observations.jsonl",
         "visual_evidence.jsonl","identities.json","aggregation_map.json","interval_evidence.json","filter_report.json","aggregation.sqlite")]
