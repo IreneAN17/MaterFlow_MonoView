@@ -1,3 +1,7 @@
+V4.2：日期时间业务表、严格目标筛选、按需语义复核与流式跟踪见 [运行说明](docs/v42_migration.md)。缺少目录/权重时明确待配置，不虚构20类或品牌识别成果。
+
+V4.1 的独立输出、运行与续跑说明见 [docs/v41_migration.md](docs/v41_migration.md)。本轮修订仅允许四类动作，新版 annotated video 不含音轨。
+
 # MaterFlow_Monoview
 
 将材料实验的第一人称视频或图片转换为可回查的视觉观察、实验事件与材料谱系。当前已实现 `prepare → caption → ground → consolidate → derive`，保留 Qwen、GroundingDINO、SAM2 image/video 和 DINOv2 的真实模型调用。模型错误会中止运行并保存失败信息；缺少视觉证据使用 `unresolved`。

@@ -1,0 +1,4 @@
+# Existing GPU environment remains pinned by requirements-gpu.txt.
+# Add this optional lightweight tracking dependency without upgrading model packages.
+opencv-python==4.12.0.88
+tzdata==2025.2

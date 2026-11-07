@@ -59,4 +59,23 @@ def load_config(config_path):
             raise ValueError(f"{name} must be a positive integer")
     if config["window_stride"] > config["window_frames"]:
         raise ValueError("window_stride cannot leave uncovered frames")
+    if "caption_interval_s" in config:
+        from .schema import validate_box
+        for key in ("caption_interval_s","caption_active_fps","detection_fps","max_track_gap_s"):
+            value=config.get(key)
+            if isinstance(value,bool) or not isinstance(value,(int,float)) or not math.isfinite(value) or value<=0:raise ValueError(f"{key} must be positive and finite")
+        if config["detection_fps"]>config["sample_fps"] or config["caption_active_fps"]>config["sample_fps"]:raise ValueError("Analysis rates cannot exceed sampled frames")
+        for key in ("motion_threshold","cut_threshold","appearance_threshold","conflict_iou","conflict_margin","box_threshold","text_threshold"):
+            value=config.get(key)
+            if value is not None and (isinstance(value,bool) or not isinstance(value,(int,float)) or not 0<=value<=1):raise ValueError(f"Invalid {key}")
+        for value in config.get("class_thresholds",{}).values():
+            if isinstance(value,bool) or not isinstance(value,(int,float)) or not 0<=value<=1:raise ValueError("Invalid per-class detection threshold")
+        for key in ("clock_roi","work_roi"):
+            if key in config:validate_box(config[key])
+        ranges=config.get("ranges_s",[])
+        for i,pair in enumerate(ranges):
+            if len(pair)!=2 or any(isinstance(v,bool) or not isinstance(v,(int,float)) or not math.isfinite(v) for v in pair) or not 0<=pair[0]<pair[1] or (i and pair[0]<ranges[i-1][1]):raise ValueError("ranges_s must be ordered non-overlapping positive intervals")
+        chunk=config.get("track_chunk_frames",40)
+        if isinstance(chunk,bool) or not isinstance(chunk,int) or chunk<1:raise ValueError("Invalid track_chunk_frames")
+        if config.get("relevance_policy","interaction_readout_foreground") not in ("interaction_readout_foreground","interaction_readout"):raise ValueError("Unknown relevance policy")
     return config

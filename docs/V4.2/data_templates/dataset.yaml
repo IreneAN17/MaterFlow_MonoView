@@ -1,0 +1,6 @@
+# Fill with actual paths/classes. Empty templates are not training datasets.
+path: .
+train: images/train
+val: images/val
+test: images/test
+names: {}

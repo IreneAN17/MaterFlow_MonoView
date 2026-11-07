@@ -35,3 +35,7 @@ Thumbs.db
 
 # Office temporary lock files
 ~$*
+
+# Isolated CPU OCR environment
+.venv-ocr/
+.venv-det/

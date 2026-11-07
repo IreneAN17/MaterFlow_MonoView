@@ -36,9 +36,17 @@ def _check_stage(summary, name, fingerprint, output):
 
 
 def process_run(config_path, stage="all"):
-    if stage not in (*STAGES, "all"):
+    if stage not in (*STAGES, "scan", "ocr", "identify", "semantic", "aggregate", "export", "all"):
         raise ValueError(f"Unknown stage: {stage}")
     config = load_config(config_path)
+    if read_json(config["manifest_path"]).get("schema_version") == "ChemFlow-v4.2":
+        from .v42.pipeline import process_run as process_v42
+        return process_v42(config_path, stage)
+    if stage not in (*STAGES, "all"):
+        raise ValueError(f"Unknown legacy stage: {stage}")
+    if read_json(config["manifest_path"]).get("schema_version") == "ChemFlow-v4.1":
+        from .v41.pipeline import process_run as process_v41
+        return process_v41(config_path, stage)
     context = load_run_context(config)
     output = config["output_dir"]
     output.mkdir(parents=True, exist_ok=True)

@@ -58,7 +58,10 @@ def json_default(value):
 def write_json(path, value):
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(value, ensure_ascii=False, indent=2, default=json_default, allow_nan=False), encoding="utf-8")
+    import os, threading
+    temporary = path.with_name(path.name + f".{os.getpid()}.{threading.get_ident()}.tmp")
+    temporary.write_text(json.dumps(value, ensure_ascii=False, indent=2, default=json_default, allow_nan=False), encoding="utf-8")
+    temporary.replace(path)
 
 
 def read_json(path):

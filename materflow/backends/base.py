@@ -7,5 +7,5 @@ class VisionBackend(ABC):
         """Independent image requests. One raw response per image."""
 
     @abstractmethod
-    def infer_clip(self, frames, timestamps, prompt):
+    def infer_clip(self, frames, timestamps, prompt, *, response_schema=None):
         """One ordered multi-image request; never independent image batching."""

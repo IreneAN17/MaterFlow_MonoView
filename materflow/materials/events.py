@@ -63,6 +63,8 @@ def propose_lab_events(observations, context):
 
     # Washing requires contact + drainage of a previously retained sample.
     for contact in states:
+        if "wash" not in context.get("actions", ACTIONS):
+            continue
         if contact["payload"]["state"] != "liquid_contacting_retained_solid":
             continue
         target = _track(contact)
@@ -93,7 +95,7 @@ def propose_lab_events(observations, context):
         if not separation or not source or not target:
             continue
         parts = []
-        if retention:
+        if any(o["payload"]["state"] == "solid_retained" for o in retention):
             parts.append({"part": "retentate", "track_id": target})
         for drain in drainage:
             parts.append({"part": "filtrate", "track_id": drain["payload"]["target_track_id"]})

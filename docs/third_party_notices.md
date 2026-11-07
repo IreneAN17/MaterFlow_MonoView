@@ -23,3 +23,8 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+
+## V4.1 isolated clock OCR
+
+RapidOCR-ONNXRuntime 1.4.4 (Apache-2.0, https://github.com/RapidAI/RapidOCR), ONNX Runtime 1.23.2 (MIT, https://onnxruntime.ai) and opencv-python 4.12.0.88 (Apache-2.0) are installed in a separate CPU environment. Their bundled license files remain in that environment. The pretrained OCR ONNX filenames and SHA256 values are recorded in each clock_raw.json; raw readings are preserved. No OCR implementation or model weights are copied into this repository.

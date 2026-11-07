@@ -243,7 +243,7 @@ class TransformersBackend(VisionBackend):
             results.extend(self._infer_batch(contents[start:start+limit], response_schema=response_schema))
         return results
 
-    def infer_clip(self, frames, timestamps, prompt):
+    def infer_clip(self, frames, timestamps, prompt, *, response_schema=None):
         if len(frames) < 2 or len(frames) != len(timestamps) or any(t is None for t in timestamps):
             raise ValueError("infer_clip needs at least two ordered images with known timestamps")
         if any(b <= a for a, b in zip(timestamps, timestamps[1:])):
@@ -252,4 +252,6 @@ class TransformersBackend(VisionBackend):
         for image, time_s in zip(frames, timestamps):
             content.extend([{"type": "text", "text": f"source-relative timestamp: {time_s:.6f}s"}, self._image_content(image)])
         content.append({"type": "text", "text": prompt})
+        if response_schema is not None:
+            return self._infer_batch([content], response_schema=response_schema)[0]
         return self._infer(content)

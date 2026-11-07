@@ -1,0 +1,106 @@
+{
+  "schema_version": "ChemFlow-v4.2",
+  "public_time_basis": "source_wall_clock",
+  "json_datetime": "ISO8601 with offset",
+  "display_datetime": "YYYY/MM/DD-HH:mm:ss",
+  "internal_coordinates": "internal only; source PTS and source-relative seconds",
+  "fields": {
+    "Observations": [
+      "observation_id",
+      "source_id",
+      "start_time",
+      "end_time",
+      "signal_type",
+      "observed_value",
+      "unit",
+      "object_class",
+      "object_id",
+      "instrument_class",
+      "value_basis",
+      "interval_status",
+      "evidence_refs",
+      "notes"
+    ],
+    "Events": [
+      "event_id",
+      "action",
+      "source_id",
+      "start_time",
+      "end_time",
+      "source_container_id",
+      "target_container_id",
+      "interval_status",
+      "evidence_refs",
+      "notes"
+    ],
+    "Materials": [
+      "material_id",
+      "material_type",
+      "container_id",
+      "created_by_event_id",
+      "provenance_status",
+      "first_observed_time",
+      "created_time",
+      "notes"
+    ],
+    "Lineage": [
+      "edge_id",
+      "source_material_id",
+      "relation",
+      "target_material_id",
+      "event_id",
+      "output_part",
+      "edge_status",
+      "event_start_time",
+      "event_end_time",
+      "notes"
+    ],
+    "Object Identities": [
+      "object_id",
+      "object_class",
+      "packaging_catalog_id",
+      "brand",
+      "product_name",
+      "catalog_number",
+      "specification",
+      "packaging_size",
+      "grade_or_concentration",
+      "packaging_match_status",
+      "relevance_status",
+      "first_observed_time",
+      "last_observed_time",
+      "evidence_refs",
+      "notes"
+    ],
+    "Field Evidence": [
+      "record_id",
+      "field",
+      "field_status",
+      "evidence_refs",
+      "reviewer",
+      "notes"
+    ],
+    "说明": [
+      "key",
+      "value",
+      "meaning"
+    ]
+  },
+  "field_evidence": {
+    "Observations": [
+      "observed_value",
+      "object_class",
+      "object_id",
+      "instrument_class"
+    ],
+    "Events": [
+      "action",
+      "source_container_id",
+      "target_container_id"
+    ],
+    "Materials": [
+      "container_id"
+    ],
+    "Lineage": []
+  }
+}

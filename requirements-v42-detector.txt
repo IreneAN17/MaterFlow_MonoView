@@ -1,0 +1,4 @@
+# Optional isolated training/tracker environment. Do not install automatically.
+# First install the same pinned requirements-gpu.txt into .venv-det.
+ultralytics==8.3.228
+lap==0.5.12
